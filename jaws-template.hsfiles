@@ -48,10 +48,9 @@ tests:
     main:             test.hs
     dependencies:
     - {{name}}
-    - tasty
-    - tasty-th
-    - tasty-quickcheck
-    - tasty-hunit
+    - hspec
+    - QuickCheck
+    - HUnit
     ghc-options:
     - -threaded
     - -rtsopts
@@ -94,41 +93,30 @@ main :: IO ()
 main = someIO
 
 {-# START_FILE test/test.hs #-}
-{-# LANGUAGE TemplateHaskell #-}
 module Main where
 
 import qualified Some.ModuleTest
 
-import Test.Tasty
-import Test.Tasty.TH
+import Test.Hspec
 
 main :: IO ()
-main = $(defaultMainGenerator)
-
-test_all :: [TestTree]
-test_all =
-  [ Some.ModuleTest.tests
-  ]
+main = hspec $ do
+  Some.ModuleTest.tests
 
 {-# START_FILE test/Some/ModuleTest.hs #-}
-{-# LANGUAGE TemplateHaskell #-}
 module Some.ModuleTest (tests) where
 
 import Some.Module
 
-import Test.Tasty
-import Test.Tasty.TH
-import Test.Tasty.QuickCheck
-import Test.Tasty.HUnit
+import Test.Hspec
+import Test.QuickCheck
+import Test.HUnit
 
-tests :: TestTree
-tests = $(testGroupGenerator)
-
-prop_twice :: Int -> Bool
-prop_twice i = someFunction i == (2 * i)
-
-case_twenty :: Assertion
-case_twenty = someFunction 10 @?= 20
+tests :: SpecWith ()
+tests = do
+  describe "Some.Module" $ do
+    it "Property check" $ property $ \i -> someFunction i == (2 * i)
+    it "Case test" $ someFunction 10 `shouldBe` 20
 
 {-# START_FILE bench/bench.hs #-}
 module Main where
